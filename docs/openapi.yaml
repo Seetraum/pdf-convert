@@ -1,0 +1,558 @@
+openapi: 3.0.3
+info:
+  title: PDF 转换服务 API
+  description: |
+    一个强大的 PDF 转换服务，支持多种格式转换为 PDF。
+    
+    ## 核心功能
+    - URL 转 PDF
+    - HTML 字符串转 PDF
+    - HTML 文件转 PDF
+    - 图片转 PDF（单张/批量）
+    - HTML 预处理和分析
+    
+    ## 浏览器支持
+    - 自动检测本地浏览器（Chrome/Chromium）
+    - 支持 Playwright 内置浏览器
+    - 支持自定义浏览器路径
+    
+  version: 2.0.0
+  contact:
+    name: PDF Service Support
+  license:
+    name: ISC
+
+servers:
+  - url: http://localhost:3000
+    description: 本地开发服务器
+  - url: https://your-domain.com
+    description: 生产服务器
+
+tags:
+  - name: PDF 转换
+    description: PDF 转换相关接口
+  - name: 系统
+    description: 系统健康检查和信息
+
+paths:
+  /health:
+    get:
+      tags:
+        - 系统
+      summary: 健康检查
+      description: 检查服务运行状态和浏览器工作状态
+      operationId: healthCheck
+      responses:
+        '200':
+          description: 服务健康
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: healthy
+                browser:
+                  working: true
+                  source: local_installation
+                  path: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+                  initialized: "2025-10-24T10:00:00.000Z"
+                environment:
+                  os: darwin
+                  localChrome: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+                  envPath: not set
+                  playwrightAvailable: true
+                  recommendation: 建议使用本地浏览器
+                timestamp: "2025-10-24T10:05:00.000Z"
+                uptime: 300.5
+
+  /info:
+    get:
+      tags:
+        - 系统
+      summary: 服务信息
+      description: 获取服务版本、功能列表和接口说明
+      operationId: getInfo
+      responses:
+        '200':
+          description: 服务信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfoResponse'
+
+  /pdf/url:
+    post:
+      tags:
+        - PDF 转换
+      summary: URL 转 PDF
+      description: 将指定的 URL 网页转换为 PDF 文档
+      operationId: urlToPdf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: 要转换的网页 URL
+                  example: https://example.com
+                options:
+                  $ref: '#/components/schemas/PdfOptions'
+      responses:
+        '200':
+          description: PDF 生成成功
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /pdf/html:
+    post:
+      tags:
+        - PDF 转换
+      summary: HTML 字符串转 PDF
+      description: 将 HTML 字符串转换为 PDF 文档，支持智能 A4 优化
+      operationId: htmlToPdf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - html
+              properties:
+                html:
+                  type: string
+                  description: HTML 内容字符串
+                  example: <h1>Hello PDF</h1><p>这是测试内容</p>
+                options:
+                  $ref: '#/components/schemas/PdfOptions'
+            examples:
+              simple:
+                summary: 简单示例
+                value:
+                  html: <h1>标题</h1><p>内容</p>
+              complex:
+                summary: 完整 HTML
+                value:
+                  html: |
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                      <meta charset="utf-8">
+                      <title>测试</title>
+                    </head>
+                    <body>
+                      <h1>标题</h1>
+                      <p>内容</p>
+                    </body>
+                    </html>
+                  options:
+                    format: A4
+                    landscape: false
+      responses:
+        '200':
+          description: PDF 生成成功
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /pdf/html-file:
+    post:
+      tags:
+        - PDF 转换
+      summary: HTML 文件转 PDF
+      description: 上传 HTML 文件并转换为 PDF
+      operationId: htmlFileToPdf
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - htmlFile
+              properties:
+                htmlFile:
+                  type: string
+                  format: binary
+                  description: HTML 文件
+                options:
+                  type: string
+                  description: JSON 格式的 PDF 选项
+                  example: '{"format":"A4"}'
+      responses:
+        '200':
+          description: PDF 生成成功
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          description: 文件过大（超过 50MB）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /pdf/image:
+    post:
+      tags:
+        - PDF 转换
+      summary: 单张图片转 PDF
+      description: 将单张图片转换为 PDF，支持自动分页长图
+      operationId: imageToPdf
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - imageFile
+              properties:
+                imageFile:
+                  type: string
+                  format: binary
+                  description: 图片文件（支持 JPG/PNG/GIF/WebP/SVG）
+                options:
+                  type: string
+                  description: JSON 格式的选项
+                  example: '{"fitMode":"contain","backgroundColor":"white"}'
+      responses:
+        '200':
+          description: PDF 生成成功
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          description: 文件过大（超过 50MB）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /pdf/images:
+    post:
+      tags:
+        - PDF 转换
+      summary: 批量图片转 PDF
+      description: 将多张图片合并转换为一个 PDF 文档
+      operationId: imagesToPdf
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - imageFiles
+              properties:
+                imageFiles:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: 图片文件数组（最多 20 张）
+                  maxItems: 20
+                options:
+                  type: string
+                  description: JSON 格式的选项
+      responses:
+        '200':
+          description: PDF 生成成功
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          description: 文件数量或大小超过限制
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /preview/html:
+    post:
+      tags:
+        - PDF 转换
+      summary: HTML 预处理预览
+      description: 预览 HTML 处理结果，不生成 PDF
+      operationId: previewHtml
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - html
+              properties:
+                html:
+                  type: string
+                  description: HTML 内容
+                options:
+                  $ref: '#/components/schemas/PdfOptions'
+      responses:
+        '200':
+          description: HTML 预处理结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreviewResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  schemas:
+    PdfOptions:
+      type: object
+      description: PDF 生成选项
+      properties:
+        format:
+          type: string
+          enum: [A4, A3, Letter, Legal]
+          default: A4
+          description: 页面格式
+        landscape:
+          type: boolean
+          default: false
+          description: 是否横向
+        margin:
+          type: object
+          description: 页面边距（只在分页时生效）
+          properties:
+            top:
+              type: string
+              default: "20px"
+              description: 上边距（分页时）
+            bottom:
+              type: string
+              default: "20px"
+              description: 下边距（分页时）
+            left:
+              type: string
+              default: "0px"
+              description: 左边距
+            right:
+              type: string
+              default: "0px"
+              description: 右边距
+        printBackground:
+          type: boolean
+          default: true
+          description: 是否打印背景
+        preferCSSPageSize:
+          type: boolean
+          default: false
+          description: 是否优先使用 CSS 定义的页面尺寸
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+          description: 服务状态
+        browser:
+          type: object
+          properties:
+            working:
+              type: boolean
+              description: 浏览器是否正常工作
+            source:
+              type: string
+              enum: [local_installation, playwright_bundled, environment_variable]
+              description: 浏览器来源
+            path:
+              type: string
+              description: 浏览器路径
+            initialized:
+              type: string
+              format: date-time
+              description: 初始化时间
+        environment:
+          type: object
+          properties:
+            os:
+              type: string
+              description: 操作系统
+            localChrome:
+              type: string
+              description: 本地浏览器路径
+            envPath:
+              type: string
+              description: 环境变量指定的路径
+            playwrightAvailable:
+              type: boolean
+              description: Playwright 是否可用
+            recommendation:
+              type: string
+              description: 推荐配置
+        timestamp:
+          type: string
+          format: date-time
+          description: 当前时间
+        uptime:
+          type: number
+          description: 运行时长（秒）
+
+    InfoResponse:
+      type: object
+      properties:
+        service:
+          type: string
+          description: 服务名称
+        version:
+          type: string
+          description: 服务版本
+        features:
+          type: array
+          items:
+            type: string
+          description: 功能列表
+        limits:
+          type: object
+          properties:
+            maxFileSize:
+              type: string
+              description: 最大文件大小
+            maxImages:
+              type: integer
+              description: 最大图片数量
+            timeout:
+              type: string
+              description: 超时时间
+        endpoints:
+          type: object
+          additionalProperties:
+            type: string
+          description: 接口列表
+
+    PreviewResponse:
+      type: object
+      properties:
+        processedHTML:
+          type: string
+          description: 处理后的 HTML
+        analysis:
+          type: object
+          properties:
+            type:
+              type: string
+              description: 文档类型
+            complexity:
+              type: string
+              enum: [low, medium, high]
+              description: 复杂度
+            features:
+              type: array
+              items:
+                type: string
+              description: 特性列表
+            estimatedPages:
+              type: integer
+              description: 估算页数
+            hasImages:
+              type: boolean
+              description: 是否包含图片
+            hasTables:
+              type: boolean
+              description: 是否包含表格
+            hasLists:
+              type: boolean
+              description: 是否包含列表
+            hasCode:
+              type: boolean
+              description: 是否包含代码
+            textLength:
+              type: integer
+              description: 文本长度
+        issues:
+          type: array
+          items:
+            type: string
+          description: 发现的问题
+        optimization:
+          type: object
+          description: 优化建议
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: 错误信息
+        details:
+          type: string
+          description: 详细错误信息
+
+  responses:
+    BadRequest:
+      description: 请求参数错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Missing required parameter
+            details: url parameter is required
+
+    InternalError:
+      description: 服务器内部错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: PDF conversion failed
+            details: Browser initialization failed
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API 密钥认证（可选）
+
+# 安全配置（如需要）
+# security:
+#   - ApiKeyAuth: []
+

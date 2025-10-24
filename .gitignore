@@ -1,0 +1,105 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# 依赖目录
+jspm_packages/
+
+# 环境变量
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 日志文件
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+service.log
+
+# 运行时数据
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# 测试覆盖率
+lib-cov
+coverage
+*.lcov
+.nyc_output
+
+# 构建输出
+dist
+build
+out
+
+# 临时文件
+*.tmp
+*.temp
+.tmp/
+.temp/
+tmp/
+temp/
+
+# 编辑器和 IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS 文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# PDF 输出文件（测试生成的）
+*.pdf
+!docs/*.pdf
+
+# 图片测试文件
+test-*.jpg
+test-*.png
+test-*.gif
+out.*
+
+# PM2
+.pm2/
+pm2.log
+
+# Docker
+.dockerignore
+
+# 备份文件
+*.bak
+*.backup
+*backup/
+
+# 笔记文件（个人笔记，不需要提交）
+note.txt
+notes/
+TODO.md
+
+# Playwright 缓存
+.playwright/
+
+# 其他
+.cache/
+.parcel-cache/
+
