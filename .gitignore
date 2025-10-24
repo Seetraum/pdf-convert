@@ -77,6 +77,8 @@ Thumbs.db
 test-*.jpg
 test-*.png
 test-*.gif
+test-image-*.png
+test-*-output.pdf
 out.*
 
 # PM2

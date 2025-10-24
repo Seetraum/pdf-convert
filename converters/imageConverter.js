@@ -146,32 +146,44 @@ export async function processMultipleImages(files, options = {}) {
                   box-sizing: border-box;
               }
               
-              body {
+              html, body {
+                  width: 100%;
+                  height: 100%;
                   background: white;
                   font-family: 'Arial', 'Microsoft YaHei', sans-serif;
               }
               
               .page {
-                  width: 210mm;
-                  height: 297mm;
+                  width: 100%;
+                  height: 100%;
                   display: flex;
                   flex-direction: column;
+                  justify-content: center;
+                  align-items: center;
                   position: relative;
                   background: white;
+                  page-break-after: always;
+              }
+              
+              .page:last-child {
+                  page-break-after: avoid;
               }
               
               .image-container {
-                  flex: 1;
+                  width: 100%;
+                  height: 100%;
                   display: flex;
                   justify-content: center;
                   align-items: center;
-                  padding: 20px 0px 30px 0px;
+                  padding: 30px 20px 40px 20px;
                   position: relative;
               }
               
               .responsive-image {
                   max-width: 100%;
                   max-height: 100%;
+                  width: auto;
+                  height: auto;
                   object-fit: contain;
                   display: block;
               }
@@ -198,15 +210,6 @@ export async function processMultipleImages(files, options = {}) {
               
               .page-number {
                   color: #888;
-              }
-              
-              @media print {
-                  .page {
-                      page-break-after: always;
-                  }
-                  .page:last-child {
-                      page-break-after: avoid;
-                  }
               }
           </style>
       </head>

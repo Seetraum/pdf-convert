@@ -161,31 +161,43 @@ export function generateImageHTML(imageData, options = {}) {
                 box-sizing: border-box;
             }
             
-            body {
+            html, body {
+                width: 100%;
+                height: 100%;
                 background: ${backgroundColor};
                 font-family: Arial, sans-serif;
             }
             
             .page {
-                width: ${A4_CONFIG.width}mm;
-                height: ${A4_CONFIG.height}mm;
+                width: 100%;
+                height: 100%;
                 display: flex;
                 flex-direction: column;
+                justify-content: center;
+                align-items: center;
                 position: relative;
                 background: white;
+                page-break-after: always;
+            }
+            
+            .page:last-child {
+                page-break-after: avoid;
             }
             
             .image-container {
-                flex: 1;
+                width: 100%;
+                height: 100%;
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                padding: ${A4_CONFIG.margin.top}px ${A4_CONFIG.margin.right}px ${A4_CONFIG.margin.bottom}px ${A4_CONFIG.margin.left}px;
+                padding: 20px;
             }
             
             .responsive-image {
                 max-width: 100%;
                 max-height: 100%;
+                width: auto;
+                height: auto;
                 object-fit: ${fitMode};
                 display: block;
             }
@@ -199,15 +211,6 @@ export function generateImageHTML(imageData, options = {}) {
                 background: rgba(255, 255, 255, 0.8);
                 padding: 2px 6px;
                 border-radius: 3px;
-            }
-            
-            @media print {
-                .page {
-                    page-break-after: always;
-                }
-                .page:last-child {
-                    page-break-after: avoid;
-                }
             }
         </style>
     </head>
